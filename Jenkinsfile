@@ -1,5 +1,7 @@
 pipeline {
-  agent any
+  agent  {
+  label 'docker-agent'
+}
 
   environment {
     DOCKER_IMAGE = "chess-app"
