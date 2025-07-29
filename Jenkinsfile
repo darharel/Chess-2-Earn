@@ -39,3 +39,12 @@ pipeline {
   }
 
   post {
+    success {
+      echo '🎉 Deployed Hello Chess app successfully!'
+    }
+    failure {
+      echo '❌ Deployment failed.'
+    }
+  }
+}
+
