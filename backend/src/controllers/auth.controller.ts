@@ -6,6 +6,7 @@ import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { registerSchema, loginSchema } from '../validation/auth.validation.js';
 import { ensureUserProgress } from '../services/progress.service.js';
+import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 export async function registerController(req: Request, res: Response): Promise<void> {
   const parsedResult = registerSchema.safeParse(req.body);
@@ -155,4 +156,13 @@ export async function verifyController(req: Request, res: Response): Promise<voi
     logger.warn('JWT verification failed', { error });
     res.status(401).json({ message: 'Invalid or expired token' });
   }
+}
+
+export async function logoutController(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.user?.id;
+  if (userId) {
+    logger.info('User logged out', { userId });
+  }
+
+  res.status(200).json({ success: true });
 }

@@ -1,4 +1,7 @@
 import { prisma } from '../lib/prisma.js';
+import { calculateRewards, type GameResult } from '../utils/rewards.js';
+import { detectOpeningFromPgn } from '../utils/opening-detector.js';
+import { ensureUserProgress, updateProgressAfterGame } from './progress.service.js';
 import { calculateRewards } from '../utils/rewards.js';
 import { detectOpeningFromPgn } from '../utils/opening-detector.js';
 import { ensureUserProgress } from './progress.service.js';
@@ -8,6 +11,7 @@ export interface SubmitGameInput {
   userId: string;
   gameUuid: string;
   pgn: string;
+  result: GameResult;
   result: 'win' | 'loss' | 'draw';
   openingId?: string;
   chessComUsername?: string;
@@ -33,6 +37,10 @@ export async function submitGameAnalysis(input: SubmitGameInput) {
     throw new Error('Invalid PGN format');
   }
 
+  const progress = await ensureUserProgress(userId);
+
+  const detectedOpening = input.openingId ?? detectOpeningFromPgn(pgn);
+  const rewards = calculateRewards(result, progress.currentStreak);
   const detectedOpening = input.openingId ?? detectOpeningFromPgn(pgn);
   const rewards = calculateRewards(result);
 
@@ -42,6 +50,7 @@ export async function submitGameAnalysis(input: SubmitGameInput) {
     chessComUsername: input.chessComUsername
   };
 
+  const { analysis } = await prisma.$transaction(async (tx) => {
   await ensureUserProgress(userId);
 
   const analysis = await prisma.$transaction(async (tx) => {
@@ -60,6 +69,7 @@ export async function submitGameAnalysis(input: SubmitGameInput) {
       }
     });
 
+    await updateProgressAfterGame(tx, userId, result, rewards);
     await tx.userProgress.update({
       where: { userId },
       data: {
@@ -91,6 +101,15 @@ export async function submitGameAnalysis(input: SubmitGameInput) {
       });
     }
 
+    return { analysis: createdAnalysis };
+  });
+
+  const stats = await getAnalysisStats(userId);
+
+  return {
+    analysis,
+    rewards,
+    stats
     return createdAnalysis;
   });
 
@@ -131,6 +150,33 @@ export async function getGameHistory(userId: string, params: { limit?: number; o
 }
 
 export async function getAnalysisStats(userId: string) {
+  const progress = await prisma.userProgress.findUnique({ where: { userId } });
+
+  if (!progress) {
+    return {
+      gamesAnalyzed: 0,
+      winRate: 0,
+      streak: { current: 0, longest: 0 },
+      favoriteOpening: null,
+      totalRewards: { gems: 0, knowledgePoints: 0 },
+      lastAnalyzedAt: null
+    };
+  }
+
+  const totalGames = progress.totalGamesPlayed || progress.gamesAnalyzedCount || 0;
+  const winRate = totalGames ? Math.round((progress.winCount / totalGames) * 100) : 0;
+
+  const favoriteOpeningProgress = await prisma.openingProgress.findFirst({
+    where: { userId },
+    orderBy: { timesPlayed: 'desc' }
+  });
+
+  const favoriteOpening = favoriteOpeningProgress?.openingId
+    ? {
+        id: favoriteOpeningProgress.openingId,
+        name:
+          CHESS_OPENINGS.find((opening) => opening.id === favoriteOpeningProgress.openingId)?.name ??
+          favoriteOpeningProgress.openingId
   const [progress, analyses] = await Promise.all([
     prisma.userProgress.findUnique({ where: { userId } }),
     prisma.gameAnalysis.findMany({ where: { userId } })
@@ -155,6 +201,18 @@ export async function getAnalysisStats(userId: string) {
     : null;
 
   return {
+    gamesAnalyzed: progress.gamesAnalyzedCount,
+    winRate,
+    streak: {
+      current: progress.currentStreak,
+      longest: progress.longestStreak
+    },
+    favoriteOpening,
+    totalRewards: {
+      gems: progress.totalGemsEarned,
+      knowledgePoints: progress.totalKnowledgeEarned
+    },
+    lastAnalyzedAt: progress.lastAnalyzedAt
     gamesAnalyzed: progress?.gamesAnalyzedCount ?? totalGames,
     winRate,
     favoriteOpening,

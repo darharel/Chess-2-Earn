@@ -42,7 +42,8 @@ export async function submitGameController(req: AuthenticatedRequest, res: Respo
     res.status(201).json({
       success: true,
       rewards: result.rewards,
-      analysis: result.analysis
+      analysis: result.analysis,
+      stats: result.stats
     });
   } catch (error) {
     if (error instanceof Error && error.message === 'Game already analyzed') {
