@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(uuid()) @map("id")
+  username          String           @unique @map("username")
+  email             String           @unique @map("email")
+  passwordHash      String           @map("password_hash")
+  chessComUsername  String?          @map("chess_com_username")
+  walletAddress     String?          @map("wallet_address")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  lastLogin         DateTime?        @map("last_login")
+  progress          UserProgress?
+  analyses          GameAnalysis[]
+  openingsProgress  OpeningProgress[]
+
+  @@map("users")
+}
+
+model UserProgress {
+  id                 String    @id @default(uuid()) @map("id")
+  userId             String    @unique @map("user_id")
+  gemsBalance        Int       @default(0) @map("gems_balance")
+  diamonds           Int       @default(0) @map("diamonds")
+  rtdBalance         Decimal   @default(0) @map("rtd_balance") @db.Decimal(12, 2)
+  knowledgePoints    Int       @default(0) @map("knowledge_points")
+  gamesAnalyzedCount Int       @default(0) @map("games_analyzed_count")
+  currentStreak      Int       @default(0) @map("current_streak")
+  longestStreak      Int       @default(0) @map("longest_streak")
+  totalGamesPlayed   Int       @default(0) @map("total_games_played")
+  winCount           Int       @default(0) @map("win_count")
+  lossCount          Int       @default(0) @map("loss_count")
+  drawCount          Int       @default(0) @map("draw_count")
+  totalGemsEarned    Int       @default(0) @map("total_gems_earned")
+  totalKnowledgeEarned Int     @default(0) @map("total_knowledge_earned")
+  lastAnalyzedAt     DateTime? @map("last_analyzed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  user               User      @relation(fields: [userId], references: [id])
+
+  @@map("user_progress")
+}
+
+model GameAnalysis {
+  id           String   @id @default(uuid()) @map("id")
+  userId       String   @map("user_id")
+  gameUuid     String   @map("game_uuid")
+  pgn          String   @map("pgn")
+  result       String   @map("result")
+  openingId    String?  @map("opening_id")
+  analysisData Json?    @map("analysis_data")
+  rewards      Json?    @map("rewards")
+  gemsEarned   Int      @default(0) @map("gems_earned")
+  kpEarned     Int      @default(0) @map("kp_earned")
+  analyzedAt   DateTime @default(now()) @map("analyzed_at")
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, gameUuid])
+  @@map("game_analysis")
+}
+
+model OpeningProgress {
+  id           String   @id @default(uuid()) @map("id")
+  userId       String   @map("user_id")
+  openingId    String   @map("opening_id")
+  timesPlayed  Int      @default(0) @map("times_played")
+  discovered   Boolean  @default(false) @map("discovered")
+  badges       Json?    @map("badges")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, openingId])
+  @@map("openings_progress")
+}
