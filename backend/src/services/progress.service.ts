@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import type { GameResult, Rewards } from '../utils/rewards.js';
 
 export type ProgressTransaction = Prisma.TransactionClient;
+import { prisma } from '../lib/prisma.js';
 
 export async function ensureUserProgress(userId: string) {
   const existing = await prisma.userProgress.findUnique({ where: { userId } });

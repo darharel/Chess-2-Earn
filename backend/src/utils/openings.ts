@@ -14,4 +14,6 @@ export const CHESS_OPENINGS: Opening[] = [
   { id: 'caro_kann', name: 'Caro-Kann Defense', moves: 'e4 c6 d4 d5' },
   { id: 'scandinavian_defense', name: 'Scandinavian Defense', moves: 'e4 d5 exd5 Qxd5 Nc3' },
   { id: 'kings_indian_defense', name: "King's Indian Defense", moves: 'd4 Nf6 c4 g6 Nc3 Bg7 e4 d6' }
+  { id: 'queens_gambit', name: "Queen's Gambit", moves: 'd4 d5 c4' },
+  { id: 'french_defense', name: 'French Defense', moves: 'e4 e6 d4 d5' }
 ];

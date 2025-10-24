@@ -41,6 +41,7 @@ model UserProgress {
   totalGemsEarned    Int       @default(0) @map("total_gems_earned")
   totalKnowledgeEarned Int     @default(0) @map("total_knowledge_earned")
   lastAnalyzedAt     DateTime? @map("last_analyzed_at")
+  totalGamesPlayed   Int       @default(0) @map("total_games_played")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
   user               User      @relation(fields: [userId], references: [id])

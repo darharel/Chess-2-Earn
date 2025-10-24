@@ -8,6 +8,7 @@ function normalizeMoves(moves: string): string[] {
     .trim()
     .split(' ')
     .map((move) => move.trim().toLowerCase())
+    .map((move) => move.trim())
     .filter(Boolean);
 }
 
@@ -34,4 +35,8 @@ export function detectOpeningFromPgn(pgn: string): string | undefined {
   }, { id: undefined, moveCount: 0 });
 
   return matchingOpening.id;
+  return CHESS_OPENINGS.find((opening) => {
+    const openingMoves = normalizeMoves(opening.moves);
+    return openingMoves.every((move, index) => normalizedMoves[index] === move);
+  })?.id;
 }

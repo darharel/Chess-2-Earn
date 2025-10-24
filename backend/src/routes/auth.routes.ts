@@ -8,6 +8,8 @@ import {
 } from '../controllers/auth.controller.js';
 import { env } from '../config/env.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { registerController, loginController, verifyController } from '../controllers/auth.controller.js';
+import { env } from '../config/env.js';
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
